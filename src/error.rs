@@ -64,6 +64,7 @@ pub enum GetStorage {
         name: Option<&'static str>,
         id: StorageId,
     },
+    TrackingNotSetup(TrackingNotSetup),
 }
 
 #[cfg(feature = "std")]
@@ -106,10 +107,18 @@ impl Debug for GetStorage {
                 _ => unreachable!(),
             },
             Self::MissingStorage { name, id } => if let Some(name) = name {
-                    f.write_fmt(format_args!("{} storage was not found in the World. You can register unique storage with: world.add_unique(your_unique);", name))
-                } else {
-                    f.write_fmt(format_args!("{:?} storage was not found in the World. You can register unique storage with: world.add_unique(your_unique);", id))
+                f.write_fmt(format_args!("{} storage was not found in the World. You can register unique storage with: world.add_unique(your_unique);", name))
+            } else {
+                f.write_fmt(format_args!("{:?} storage was not found in the World. You can register unique storage with: world.add_unique(your_unique);", id))
+            }
+            GetStorage::TrackingNotSetup(tracking_error) => {
+                match tracking_error {
+                    TrackingNotSetup::Insertion => todo!(),
+                    TrackingNotSetup::Modification => todo!(),
+                    TrackingNotSetup::Deletion => todo!(),
+                    TrackingNotSetup::Removal => todo!(),
                 }
+            }
         }
     }
 }
@@ -118,6 +127,14 @@ impl Display for GetStorage {
     fn fmt(&self, f: &mut Formatter<'_>) -> Result<(), core::fmt::Error> {
         Debug::fmt(self, f)
     }
+}
+
+#[derive(Clone, Copy, PartialEq, Eq)]
+pub enum TrackingNotSetup {
+    Insertion,
+    Modification,
+    Deletion,
+    Removal,
 }
 
 /// Error related to adding an entity.

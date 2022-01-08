@@ -6,7 +6,7 @@ use core::hint::unreachable_unchecked;
 use core::marker::PhantomData;
 use core::ptr;
 
-pub struct FullRawWindow<'a, T, Tracking> {
+pub struct FullRawWindow<'a, T> {
     sparse: *const *const EntityId,
     sparse_len: usize,
     pub(crate) dense: *const EntityId,
@@ -17,18 +17,20 @@ pub struct FullRawWindow<'a, T, Tracking> {
     pub(crate) last_insertion: u32,
     pub(crate) last_modification: u32,
     pub(crate) current: u32,
+    pub(crate) is_tracking_insertion: bool,
     pub(crate) is_tracking_modification: bool,
-    _phantom: PhantomData<(&'a T, Tracking)>,
+    _phantom: PhantomData<&'a T>,
 }
 
-unsafe impl<T: Send + Component> Send for FullRawWindow<'_, T, T::Tracking> {}
+unsafe impl<T: Send + Component> Send for FullRawWindow<'_, T> {}
 
-impl<'w, T: Component> FullRawWindow<'w, T, T::Tracking> {
+impl<'w, T: Component> FullRawWindow<'w, T> {
     #[inline]
-    pub(crate) fn from_view(sparse_set: &View<'_, T, T::Tracking>) -> Self {
+    pub(crate) fn from_view(sparse_set: &View<'_, T>) -> Self {
         let sparse_len = sparse_set.sparse.len();
         let sparse: *const Option<Box<[EntityId; super::BUCKET_SIZE]>> = sparse_set.sparse.as_ptr();
         let sparse = sparse as *const *const EntityId;
+        let is_tracking_insertion = sparse_set.is_tracking_insertion();
         let is_tracking_modification = sparse_set.is_tracking_modification();
 
         FullRawWindow {
@@ -42,15 +44,17 @@ impl<'w, T: Component> FullRawWindow<'w, T, T::Tracking> {
             last_insertion: sparse_set.last_insert,
             last_modification: sparse_set.last_modification,
             current: sparse_set.current,
+            is_tracking_insertion,
             is_tracking_modification,
             _phantom: PhantomData,
         }
     }
     #[inline]
-    pub(crate) fn from_view_mut(sparse_set: &ViewMut<'_, T, T::Tracking>) -> Self {
+    pub(crate) fn from_view_mut(sparse_set: &ViewMut<'_, T>) -> Self {
         let sparse_len = sparse_set.sparse.len();
         let sparse: *const Option<Box<[EntityId; super::BUCKET_SIZE]>> = sparse_set.sparse.as_ptr();
         let sparse = sparse as *const *const EntityId;
+        let is_tracking_insertion = sparse_set.is_tracking_insertion();
         let is_tracking_modification = sparse_set.is_tracking_modification();
 
         FullRawWindow {
@@ -64,6 +68,7 @@ impl<'w, T: Component> FullRawWindow<'w, T, T::Tracking> {
             last_insertion: sparse_set.last_insert,
             last_modification: sparse_set.last_modification,
             current: sparse_set.current,
+            is_tracking_insertion,
             is_tracking_modification,
             _phantom: PhantomData,
         }
@@ -108,7 +113,7 @@ impl<'w, T: Component> FullRawWindow<'w, T, T::Tracking> {
     }
 }
 
-impl<T: Component> Clone for FullRawWindow<'_, T, T::Tracking> {
+impl<T: Component> Clone for FullRawWindow<'_, T> {
     #[inline]
     fn clone(&self) -> Self {
         FullRawWindow {
@@ -122,13 +127,14 @@ impl<T: Component> Clone for FullRawWindow<'_, T, T::Tracking> {
             last_insertion: self.last_insertion,
             last_modification: self.last_modification,
             current: self.current,
+            is_tracking_insertion: self.is_tracking_insertion,
             is_tracking_modification: self.is_tracking_modification,
             _phantom: PhantomData,
         }
     }
 }
 
-pub struct FullRawWindowMut<'a, T, Tracking> {
+pub struct FullRawWindowMut<'a, T> {
     sparse: *mut *mut EntityId,
     sparse_len: usize,
     pub(crate) dense: *mut EntityId,
@@ -139,19 +145,21 @@ pub struct FullRawWindowMut<'a, T, Tracking> {
     pub(crate) last_insertion: u32,
     pub(crate) last_modification: u32,
     pub(crate) current: u32,
+    pub(crate) is_tracking_insertion: bool,
     pub(crate) is_tracking_modification: bool,
-    _phantom: PhantomData<(&'a mut T, Tracking)>,
+    _phantom: PhantomData<&'a mut T>,
 }
 
-unsafe impl<T: Send + Component> Send for FullRawWindowMut<'_, T, T::Tracking> {}
+unsafe impl<T: Send + Component> Send for FullRawWindowMut<'_, T> {}
 
-impl<'w, T: Component> FullRawWindowMut<'w, T, T::Tracking> {
+impl<'w, T: Component> FullRawWindowMut<'w, T> {
     #[inline]
-    pub(crate) fn new(sparse_set: &mut ViewMut<'_, T, T::Tracking>) -> Self {
+    pub(crate) fn new(sparse_set: &mut ViewMut<'_, T>) -> Self {
         let sparse_len = sparse_set.sparse.len();
         let sparse: *mut Option<Box<[EntityId; super::BUCKET_SIZE]>> =
             sparse_set.sparse.as_mut_ptr();
         let sparse = sparse as *mut *mut EntityId;
+        let is_tracking_insertion = sparse_set.is_tracking_insertion();
         let is_tracking_modification = sparse_set.is_tracking_modification();
 
         FullRawWindowMut {
@@ -165,6 +173,7 @@ impl<'w, T: Component> FullRawWindowMut<'w, T, T::Tracking> {
             last_insertion: sparse_set.last_insert,
             last_modification: sparse_set.last_modification,
             current: sparse_set.current,
+            is_tracking_insertion,
             is_tracking_modification,
             _phantom: PhantomData,
         }
@@ -209,7 +218,7 @@ impl<'w, T: Component> FullRawWindowMut<'w, T, T::Tracking> {
     }
 }
 
-impl<T: Component> Clone for FullRawWindowMut<'_, T, T::Tracking> {
+impl<T: Component> Clone for FullRawWindowMut<'_, T> {
     #[inline]
     fn clone(&self) -> Self {
         FullRawWindowMut {
@@ -223,6 +232,7 @@ impl<T: Component> Clone for FullRawWindowMut<'_, T, T::Tracking> {
             last_insertion: self.last_insertion,
             last_modification: self.last_modification,
             current: self.current,
+            is_tracking_insertion: self.is_tracking_insertion,
             is_tracking_modification: self.is_tracking_modification,
             _phantom: PhantomData,
         }

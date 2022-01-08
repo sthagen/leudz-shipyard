@@ -1,8 +1,8 @@
 mod inserted;
 mod inserted_or_modified;
 mod modified;
-mod not;
-mod or;
+// mod not;
+// mod or;
 
 use super::abstract_mut::AbstractMut;
 use crate::component::Component;
@@ -45,7 +45,7 @@ pub trait IntoAbstract {
 }
 
 impl<'a, T: Component> IntoAbstract for &'a View<'a, T> {
-    type AbsView = FullRawWindow<'a, T, T::Tracking>;
+    type AbsView = FullRawWindow<'a, T>;
 
     #[inline]
     fn into_abstract(self) -> Self::AbsView {
@@ -57,7 +57,7 @@ impl<'a, T: Component> IntoAbstract for &'a View<'a, T> {
     }
     #[inline]
     fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
+        TypeId::of::<SparseSet<T>>()
     }
     #[inline]
     fn inner_type_id(&self) -> TypeId {
@@ -70,7 +70,7 @@ impl<'a, T: Component> IntoAbstract for &'a View<'a, T> {
 }
 
 impl<'a: 'b, 'b, T: Component> IntoAbstract for &'b ViewMut<'a, T> {
-    type AbsView = FullRawWindow<'b, T, T::Tracking>;
+    type AbsView = FullRawWindow<'b, T>;
 
     #[inline]
     fn into_abstract(self) -> Self::AbsView {
@@ -82,7 +82,7 @@ impl<'a: 'b, 'b, T: Component> IntoAbstract for &'b ViewMut<'a, T> {
     }
     #[inline]
     fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
+        TypeId::of::<SparseSet<T>>()
     }
     #[inline]
     fn inner_type_id(&self) -> TypeId {
@@ -94,10 +94,8 @@ impl<'a: 'b, 'b, T: Component> IntoAbstract for &'b ViewMut<'a, T> {
     }
 }
 
-impl<'a: 'b, 'b, T: Component<Tracking = track::Untracked>> IntoAbstract
-    for &'b mut ViewMut<'a, T, track::Untracked>
-{
-    type AbsView = FullRawWindowMut<'b, T, track::Untracked>;
+impl<'a: 'b, 'b, T: Component> IntoAbstract for &'b mut ViewMut<'a, T> {
+    type AbsView = FullRawWindowMut<'b, T>;
 
     #[inline]
     fn into_abstract(self) -> Self::AbsView {
@@ -109,115 +107,7 @@ impl<'a: 'b, 'b, T: Component<Tracking = track::Untracked>> IntoAbstract
     }
     #[inline]
     fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
-    }
-    #[inline]
-    fn inner_type_id(&self) -> TypeId {
-        TypeId::of::<T>()
-    }
-    #[inline]
-    fn dense(&self) -> *const EntityId {
-        self.dense.as_ptr()
-    }
-}
-
-impl<'a: 'b, 'b, T: Component<Tracking = track::Insertion>> IntoAbstract
-    for &'b mut ViewMut<'a, T, track::Insertion>
-{
-    type AbsView = FullRawWindowMut<'b, T, track::Insertion>;
-
-    #[inline]
-    fn into_abstract(self) -> Self::AbsView {
-        FullRawWindowMut::new(self)
-    }
-    #[inline]
-    fn len(&self) -> Option<usize> {
-        Some((**self).len())
-    }
-    #[inline]
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
-    }
-    #[inline]
-    fn inner_type_id(&self) -> TypeId {
-        TypeId::of::<T>()
-    }
-    #[inline]
-    fn dense(&self) -> *const EntityId {
-        self.dense.as_ptr()
-    }
-}
-
-impl<'a: 'b, 'b, T: Component<Tracking = track::Modification>> IntoAbstract
-    for &'b mut ViewMut<'a, T, track::Modification>
-{
-    type AbsView = FullRawWindowMut<'b, T, track::Modification>;
-
-    #[inline]
-    fn into_abstract(self) -> Self::AbsView {
-        FullRawWindowMut::new(self)
-    }
-    #[inline]
-    fn len(&self) -> Option<usize> {
-        Some((**self).len())
-    }
-    #[inline]
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
-    }
-    #[inline]
-    fn inner_type_id(&self) -> TypeId {
-        TypeId::of::<T>()
-    }
-    #[inline]
-    fn dense(&self) -> *const EntityId {
-        self.dense.as_ptr()
-    }
-}
-
-impl<'a: 'b, 'b, T: Component<Tracking = track::Removal>> IntoAbstract
-    for &'b mut ViewMut<'a, T, track::Removal>
-{
-    type AbsView = FullRawWindowMut<'b, T, track::Removal>;
-
-    #[inline]
-    fn into_abstract(self) -> Self::AbsView {
-        FullRawWindowMut::new(self)
-    }
-    #[inline]
-    fn len(&self) -> Option<usize> {
-        Some((**self).len())
-    }
-    #[inline]
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
-    }
-    #[inline]
-    fn inner_type_id(&self) -> TypeId {
-        TypeId::of::<T>()
-    }
-    #[inline]
-    fn dense(&self) -> *const EntityId {
-        self.dense.as_ptr()
-    }
-}
-
-impl<'a: 'b, 'b, T: Component<Tracking = track::All>> IntoAbstract
-    for &'b mut ViewMut<'a, T, track::All>
-{
-    type AbsView = FullRawWindowMut<'b, T, track::All>;
-
-    #[inline]
-    fn into_abstract(self) -> Self::AbsView {
-        FullRawWindowMut::new(self)
-    }
-    #[inline]
-    fn len(&self) -> Option<usize> {
-        Some((**self).len())
-    }
-    #[inline]
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
+        TypeId::of::<SparseSet<T>>()
     }
     #[inline]
     fn inner_type_id(&self) -> TypeId {

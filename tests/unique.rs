@@ -3,9 +3,7 @@ use shipyard::error;
 use shipyard::*;
 
 struct USIZE(usize);
-impl Component for USIZE {
-    type Tracking = track::Untracked;
-}
+impl Component for USIZE {}
 
 #[test]
 fn unique_storage() {
@@ -85,9 +83,7 @@ fn non_send() {
         _phantom: core::marker::PhantomData<*const ()>,
     }
     unsafe impl Sync for NonSendStruct {}
-    impl Component for NonSendStruct {
-        type Tracking = track::Untracked;
-    }
+    impl Component for NonSendStruct {}
 
     let world = World::default();
     world
@@ -117,9 +113,7 @@ fn non_sync() {
         _phantom: core::marker::PhantomData<*const ()>,
     }
     unsafe impl Send for NonSyncStruct {}
-    impl Component for NonSyncStruct {
-        type Tracking = track::Untracked;
-    }
+    impl Component for NonSyncStruct {}
 
     let world = World::default();
     world
@@ -148,9 +142,7 @@ fn non_send_sync() {
         value: usize,
         _phantom: core::marker::PhantomData<*const ()>,
     }
-    impl Component for NonSendSyncStruct {
-        type Tracking = track::Untracked;
-    }
+    impl Component for NonSendSyncStruct {}
 
     let world = World::default();
     world

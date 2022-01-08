@@ -4,17 +4,13 @@ use shipyard::*;
 
 #[derive(PartialEq, Eq, Debug)]
 struct U32(u32);
-impl Component for U32 {
-    type Tracking = track::Untracked;
-}
+impl Component for U32 {}
 
 #[test]
 fn no_pack() {
     #[derive(PartialEq, Eq, Debug)]
     struct USIZE(usize);
-    impl Component for USIZE {
-        type Tracking = track::Untracked;
-    }
+    impl Component for USIZE {}
 
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
     let (mut entities, mut usizes, mut u32s) = world
@@ -41,9 +37,7 @@ fn no_pack() {
 fn update() {
     #[derive(PartialEq, Eq, Debug)]
     struct USIZE(usize);
-    impl Component for USIZE {
-        type Tracking = track::All;
-    }
+    impl Component for USIZE {}
 
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
     let (mut entities, mut usizes) = world.borrow::<(EntitiesViewMut, ViewMut<USIZE>)>().unwrap();
@@ -77,9 +71,7 @@ fn update() {
 fn old_key() {
     #[derive(PartialEq, Eq, Debug)]
     struct USIZE(usize);
-    impl Component for USIZE {
-        type Tracking = track::Untracked;
-    }
+    impl Component for USIZE {}
 
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 
@@ -118,9 +110,7 @@ fn old_key() {
 fn newer_key() {
     #[derive(PartialEq, Eq, Debug)]
     struct USIZE(usize);
-    impl Component for USIZE {
-        type Tracking = track::Untracked;
-    }
+    impl Component for USIZE {}
 
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 
@@ -152,9 +142,7 @@ fn newer_key() {
 fn track_reset_with_timestamp() {
     #[derive(PartialEq, Eq, Debug)]
     struct USIZE(usize);
-    impl Component for USIZE {
-        type Tracking = track::All;
-    }
+    impl Component for USIZE {}
 
     let mut world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 

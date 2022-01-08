@@ -11,7 +11,7 @@ fn type_check() {
     #[derive(Debug, PartialEq)]
     struct Energy(f32);
     impl Component for Energy {
-        type Tracking = track::Untracked;
+        
     }
 
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
@@ -35,13 +35,13 @@ fn non_packed() {
     #[derive(PartialEq, Eq, Debug)]
     struct U32(u32);
     impl Component for U32 {
-        type Tracking = track::Untracked;
+        
     }
 
     #[derive(PartialEq, Eq, Debug)]
     struct I16(i16);
     impl Component for I16 {
-        type Tracking = track::Untracked;
+        
     }
 
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
@@ -78,15 +78,11 @@ fn non_packed() {
 fn update() {
     #[derive(PartialEq, Eq, Debug)]
     struct U32(u32);
-    impl Component for U32 {
-        type Tracking = track::All;
-    }
+    impl Component for U32 {}
 
     #[derive(PartialEq, Eq, Debug)]
     struct I16(i16);
-    impl Component for I16 {
-        type Tracking = track::All;
-    }
+    impl Component for I16 {}
 
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 
@@ -122,9 +118,7 @@ fn update() {
 #[test]
 fn old_id() {
     struct U32(u32);
-    impl Component for U32 {
-        type Tracking = track::All;
-    }
+    impl Component for U32 {}
 
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 

@@ -58,7 +58,6 @@ mod system;
 mod timestamp;
 /// module related to storage tracking, like insertion or modification.
 pub mod track;
-mod tracking;
 mod type_id;
 mod unique;
 mod view;
@@ -105,7 +104,7 @@ pub use storage::{Storage, StorageId};
 #[doc(hidden)]
 pub use system::{AllSystem, Nothing, System};
 pub use timestamp::TrackingTimestamp;
-pub use tracking::{Inserted, InsertedOrModified, Modified};
+pub use track::{All, Inserted, InsertedOrModified, Modified};
 pub use unique::Unique;
 pub use view::{
     AllStoragesView, AllStoragesViewMut, EntitiesView, EntitiesViewMut, UniqueView, UniqueViewMut,

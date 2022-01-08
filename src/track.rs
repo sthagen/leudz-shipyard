@@ -1,129 +1,364 @@
-mod all;
-mod deletion;
-mod insertion;
-mod modification;
-mod nothing;
-mod removal;
+use crate::not::Not;
+use crate::{Component, EntityId, View, ViewMut};
 
-use crate::component::Component;
-use crate::entity_id::EntityId;
-use crate::seal::Sealed;
-use crate::sparse_set::SparseSet;
-use crate::view::ViewMut;
-use crate::SparseSetDrain;
+/// Wrapper type allowing iterating over *inserted* flagged components.
+#[derive(Clone)]
+pub struct Inserted<Storage>(pub(crate) Storage);
 
-#[allow(missing_docs)]
-pub struct Untracked(());
-#[allow(missing_docs)]
-pub struct Insertion(());
-#[allow(missing_docs)]
-pub struct Modification(());
-#[allow(missing_docs)]
-pub struct Deletion(());
-#[allow(missing_docs)]
-pub struct Removal(());
-#[allow(missing_docs)]
-pub struct All(());
+impl<Storage> core::ops::Not for Inserted<Storage> {
+    type Output = Not<Inserted<Storage>>;
 
-/// Trait implemented by all trackings.
-pub trait Tracking<T: Component>: Sized + Sealed {
-    #[doc(hidden)]
-    #[inline]
-    fn track_insertion() -> bool {
-        false
+    fn not(self) -> Self::Output {
+        Not(self)
     }
-    #[doc(hidden)]
-    #[inline]
-    fn track_modification() -> bool {
-        false
+}
+
+impl<'a, T: Component> Inserted<View<'a, T>> {
+    pub fn inserted(&self) -> Inserted<&View<'a, T>> {
+        Inserted(&self.0)
     }
-    #[doc(hidden)]
-    #[inline]
-    fn track_deletion() -> bool {
-        false
+}
+
+impl<'a, T: Component> core::ops::Deref for Inserted<View<'a, T>> {
+    type Target = View<'a, T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
     }
-    #[doc(hidden)]
-    #[inline]
-    fn track_removal() -> bool {
-        false
+}
+
+impl<'a, T: Component> Inserted<ViewMut<'a, T>> {
+    pub fn inserted(&self) -> Inserted<&ViewMut<'a, T>> {
+        Inserted(&self.0)
     }
-
-    #[doc(hidden)]
-    #[inline]
-    fn is_inserted(
-        _sparse_set: &SparseSet<T, Self>,
-        _entity: EntityId,
-        _last: u32,
-        _current: u32,
-    ) -> bool {
-        false
+    pub fn inserted_mut(&mut self) -> Inserted<&mut ViewMut<'a, T>> {
+        Inserted(&mut self.0)
     }
-    #[doc(hidden)]
     #[inline]
-    fn is_modified(
-        _sparse_set: &SparseSet<T, Self>,
-        _entity: EntityId,
-        _last: u32,
-        _current: u32,
-    ) -> bool {
-        false
+    pub fn clear_all_inserted(self) {
+        self.0.sparse_set.private_clear_all_inserted(self.current);
     }
-    #[doc(hidden)]
+}
+
+impl<'a, T: Component> core::ops::Deref for Inserted<ViewMut<'a, T>> {
+    type Target = ViewMut<'a, T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a, T: Component> core::ops::DerefMut for Inserted<ViewMut<'a, T>> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+/// Wrapper type allowing iterating over *modified* flagged components.
+#[derive(Clone)]
+pub struct Modified<Storage>(pub(crate) Storage);
+
+impl<Storage> core::ops::Not for Modified<Storage> {
+    type Output = Not<Modified<Storage>>;
+
+    fn not(self) -> Self::Output {
+        Not(self)
+    }
+}
+
+impl<'a, T: Component> Modified<View<'a, T>> {
+    pub fn modified(&self) -> Modified<&View<'a, T>> {
+        Modified(&self.0)
+    }
+}
+
+impl<'a, T: Component> core::ops::Deref for Modified<View<'a, T>> {
+    type Target = View<'a, T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a, T: Component> Modified<ViewMut<'a, T>> {
+    pub fn modified(&self) -> Modified<&ViewMut<'a, T>> {
+        Modified(&self.0)
+    }
+    pub fn modified_mut(&mut self) -> Modified<&mut ViewMut<'a, T>> {
+        Modified(&mut self.0)
+    }
     #[inline]
-    fn is_deleted(
-        _sparse_set: &SparseSet<T, Self>,
-        _entity: EntityId,
-        _last: u32,
-        _current: u32,
-    ) -> bool {
-        false
+    pub fn clear_all_modified(self) {
+        self.0.sparse_set.private_clear_all_modified(self.current);
     }
-    #[doc(hidden)]
+}
+
+impl<'a, T: Component> core::ops::Deref for Modified<ViewMut<'a, T>> {
+    type Target = ViewMut<'a, T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a, T: Component> core::ops::DerefMut for Modified<ViewMut<'a, T>> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
+
+/// Wrapper type allowing iterating over *inserted* and *modified* flagged components.
+#[derive(Clone)]
+pub struct InsertedOrModified<Storage>(pub(crate) Storage);
+
+impl<Storage> core::ops::Not for InsertedOrModified<Storage> {
+    type Output = Not<InsertedOrModified<Storage>>;
+
+    fn not(self) -> Self::Output {
+        Not(self)
+    }
+}
+
+impl<'a, T: Component> InsertedOrModified<View<'a, T>> {
+    pub fn inserted(&self) -> Inserted<&View<'a, T>> {
+        Inserted(&self.0)
+    }
+    pub fn modified(&self) -> Modified<&View<'a, T>> {
+        Modified(&self.0)
+    }
+    pub fn inserted_or_modified(&self) -> InsertedOrModified<&View<'a, T>> {
+        InsertedOrModified(&self.0)
+    }
+}
+
+impl<'a, T: Component> core::ops::Deref for InsertedOrModified<View<'a, T>> {
+    type Target = View<'a, T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a, T: Component> InsertedOrModified<ViewMut<'a, T>> {
+    pub fn inserted(&self) -> Inserted<&ViewMut<'a, T>> {
+        Inserted(&self.0)
+    }
+    pub fn inserted_mut(&mut self) -> Inserted<&mut ViewMut<'a, T>> {
+        Inserted(&mut self.0)
+    }
+    pub fn modified(&self) -> Modified<&ViewMut<'a, T>> {
+        Modified(&self.0)
+    }
+    pub fn modified_mut(&mut self) -> Modified<&mut ViewMut<'a, T>> {
+        Modified(&mut self.0)
+    }
+    pub fn inserted_or_modified(&self) -> InsertedOrModified<&ViewMut<'a, T>> {
+        InsertedOrModified(&self.0)
+    }
+    pub fn inserted_or_modified_mut(&mut self) -> InsertedOrModified<&mut ViewMut<'a, T>> {
+        InsertedOrModified(&mut self.0)
+    }
     #[inline]
-    fn is_removed(
-        _sparse_set: &SparseSet<T, Self>,
-        _entity: EntityId,
-        _last: u32,
-        _current: u32,
-    ) -> bool {
-        false
+    pub fn clear_all_inserted(self) {
+        self.0.sparse_set.private_clear_all_inserted(self.current);
     }
+    #[inline]
+    pub fn clear_all_modified(self) {
+        self.0.sparse_set.private_clear_all_modified(self.current);
+    }
+    #[inline]
+    pub fn clear_all_inserted_and_modified(self) {
+        self.0
+            .sparse_set
+            .private_clear_all_inserted_and_modified(self.current);
+    }
+}
 
-    #[doc(hidden)]
-    fn remove(sparse_set: &mut SparseSet<T, Self>, entity: EntityId, current: u32) -> Option<T>;
+impl<'a, T: Component> core::ops::Deref for InsertedOrModified<ViewMut<'a, T>> {
+    type Target = ViewMut<'a, T>;
 
-    #[doc(hidden)]
-    fn delete(sparse_set: &mut SparseSet<T, Self>, entity: EntityId, current: u32) -> bool;
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
 
-    #[doc(hidden)]
-    fn clear(sparse_set: &mut SparseSet<T, Self>, current: u32);
+impl<'a, T: Component> core::ops::DerefMut for InsertedOrModified<ViewMut<'a, T>> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
+    }
+}
 
-    #[doc(hidden)]
-    fn apply<R, F: FnOnce(&mut T, &T) -> R>(
-        sparse_set: &mut ViewMut<'_, T, Self>,
-        a: EntityId,
-        b: EntityId,
-        f: F,
-    ) -> R;
+#[derive(Clone)]
+pub struct All<Storage>(pub(crate) Storage);
 
-    #[doc(hidden)]
-    fn apply_mut<R, F: FnOnce(&mut T, &mut T) -> R>(
-        sparse_set: &mut ViewMut<'_, T, Self>,
-        a: EntityId,
-        b: EntityId,
-        f: F,
-    ) -> R;
+impl<'a, T: Component> All<View<'a, T>> {
+    pub fn inserted(&self) -> Inserted<&View<'a, T>> {
+        Inserted(&self.0)
+    }
+    pub fn modified(&self) -> Modified<&View<'a, T>> {
+        Modified(&self.0)
+    }
+    pub fn inserted_or_modified(&self) -> InsertedOrModified<&View<'a, T>> {
+        InsertedOrModified(&self.0)
+    }
+    /// Returns the *deleted* components of a storage tracking deletion.
+    pub fn deleted(&self) -> impl Iterator<Item = (EntityId, &T)> + '_ {
+        self.sparse_set
+            .deletion_data
+            .iter()
+            .filter_map(move |(entity, timestamp, component)| {
+                if is_track_within_bounds(*timestamp, self.last_removal_or_deletion, self.current) {
+                    Some((*entity, component))
+                } else {
+                    None
+                }
+            })
+    }
+    /// Returns the ids of *removed* components of a storage tracking removal.
+    pub fn removed(&self) -> impl Iterator<Item = EntityId> + '_ {
+        self.sparse_set
+            .removal_data
+            .iter()
+            .filter_map(move |(entity, timestamp)| {
+                if is_track_within_bounds(*timestamp, self.last_removal_or_deletion, self.current) {
+                    Some(*entity)
+                } else {
+                    None
+                }
+            })
+    }
+    /// Returns the ids of *removed* or *deleted* components of a storage tracking removal and/or deletion.
+    pub fn removed_or_deleted(&self) -> impl Iterator<Item = EntityId> + '_ {
+        self.sparse_set
+            .deletion_data
+            .iter()
+            .filter_map(move |(entity, timestamp, _)| {
+                if is_track_within_bounds(*timestamp, self.last_removal_or_deletion, self.current) {
+                    Some(*entity)
+                } else {
+                    None
+                }
+            })
+            .chain(
+                self.sparse_set
+                    .removal_data
+                    .iter()
+                    .filter_map(move |(entity, timestamp)| {
+                        if is_track_within_bounds(*timestamp, self.last_insert, self.current) {
+                            Some(*entity)
+                        } else {
+                            None
+                        }
+                    }),
+            )
+    }
+}
 
-    #[doc(hidden)]
-    fn drain(sparse_set: &'_ mut SparseSet<T, Self>, current: u32) -> SparseSetDrain<'_, T>;
+impl<'a, T: Component> core::ops::Deref for All<View<'a, T>> {
+    type Target = View<'a, T>;
 
-    #[doc(hidden)]
-    fn clear_all_removed_or_deleted(_sparse_set: &mut SparseSet<T, Self>) {}
-    #[doc(hidden)]
-    fn clear_all_removed_or_deleted_older_than_timestamp(
-        _sparse_set: &mut SparseSet<T, Self>,
-        _timestamp: crate::TrackingTimestamp,
-    ) {
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a, T: Component> All<ViewMut<'a, T>> {
+    pub fn inserted(&self) -> Inserted<&ViewMut<'a, T>> {
+        Inserted(&self.0)
+    }
+    pub fn inserted_mut(&mut self) -> Inserted<&mut ViewMut<'a, T>> {
+        Inserted(&mut self.0)
+    }
+    pub fn modified(&self) -> Modified<&ViewMut<'a, T>> {
+        Modified(&self.0)
+    }
+    pub fn modified_mut(&mut self) -> Modified<&mut ViewMut<'a, T>> {
+        Modified(&mut self.0)
+    }
+    pub fn inserted_or_modified(&self) -> InsertedOrModified<&ViewMut<'a, T>> {
+        InsertedOrModified(&self.0)
+    }
+    pub fn inserted_or_modified_mut(&mut self) -> InsertedOrModified<&mut ViewMut<'a, T>> {
+        InsertedOrModified(&mut self.0)
+    }
+    #[inline]
+    pub fn clear_all_inserted(self) {
+        self.0.sparse_set.private_clear_all_inserted(self.current);
+    }
+    #[inline]
+    pub fn clear_all_modified(self) {
+        self.0.sparse_set.private_clear_all_modified(self.current);
+    }
+    #[inline]
+    pub fn clear_all_inserted_and_modified(self) {
+        self.0
+            .sparse_set
+            .private_clear_all_inserted_and_modified(self.current);
+    }
+    /// Returns the *deleted* components of a storage tracking deletion.
+    pub fn deleted(&self) -> impl Iterator<Item = (EntityId, &T)> + '_ {
+        self.sparse_set
+            .deletion_data
+            .iter()
+            .filter_map(move |(entity, timestamp, component)| {
+                if is_track_within_bounds(*timestamp, self.last_removal_or_deletion, self.current) {
+                    Some((*entity, component))
+                } else {
+                    None
+                }
+            })
+    }
+    /// Returns the ids of *removed* components of a storage tracking removal.
+    pub fn removed(&self) -> impl Iterator<Item = EntityId> + '_ {
+        self.sparse_set
+            .removal_data
+            .iter()
+            .filter_map(move |(entity, timestamp)| {
+                if is_track_within_bounds(*timestamp, self.last_removal_or_deletion, self.current) {
+                    Some(*entity)
+                } else {
+                    None
+                }
+            })
+    }
+    /// Returns the ids of *removed* or *deleted* components of a storage tracking removal and/or deletion.
+    pub fn removed_or_deleted(&self) -> impl Iterator<Item = EntityId> + '_ {
+        self.sparse_set
+            .deletion_data
+            .iter()
+            .filter_map(move |(entity, timestamp, _)| {
+                if is_track_within_bounds(*timestamp, self.last_removal_or_deletion, self.current) {
+                    Some(*entity)
+                } else {
+                    None
+                }
+            })
+            .chain(
+                self.sparse_set
+                    .removal_data
+                    .iter()
+                    .filter_map(move |(entity, timestamp)| {
+                        if is_track_within_bounds(*timestamp, self.last_insert, self.current) {
+                            Some(*entity)
+                        } else {
+                            None
+                        }
+                    }),
+            )
+    }
+}
+
+impl<'a, T: Component> core::ops::Deref for All<ViewMut<'a, T>> {
+    type Target = ViewMut<'a, T>;
+
+    fn deref(&self) -> &Self::Target {
+        &self.0
+    }
+}
+
+impl<'a, T: Component> core::ops::DerefMut for All<ViewMut<'a, T>> {
+    fn deref_mut(&mut self) -> &mut Self::Target {
+        &mut self.0
     }
 }
 

@@ -3,14 +3,12 @@ use crate::component::Component;
 use crate::entity_id::EntityId;
 use crate::sparse_set::{FullRawWindow, FullRawWindowMut, SparseSet};
 use crate::track;
-use crate::tracking::Modified;
+use crate::track::Modified;
 use crate::type_id::TypeId;
 use crate::view::{View, ViewMut};
 
-impl<'tmp, 'v, T: Component<Tracking = track::Modification>> IntoAbstract
-    for Modified<&'tmp View<'v, T, track::Modification>>
-{
-    type AbsView = Modified<FullRawWindow<'tmp, T, track::Modification>>;
+impl<'tmp, 'v, T: Component> IntoAbstract for Modified<&'tmp View<'v, T>> {
+    type AbsView = Modified<FullRawWindow<'tmp, T>>;
 
     fn into_abstract(self) -> Self::AbsView {
         Modified(self.0.into_abstract())
@@ -22,7 +20,7 @@ impl<'tmp, 'v, T: Component<Tracking = track::Modification>> IntoAbstract
         true
     }
     fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
+        TypeId::of::<SparseSet<T>>()
     }
     #[inline]
     fn inner_type_id(&self) -> TypeId {
@@ -33,36 +31,8 @@ impl<'tmp, 'v, T: Component<Tracking = track::Modification>> IntoAbstract
     }
 }
 
-impl<'tmp, 'v, T: Component<Tracking = track::All>> IntoAbstract
-    for Modified<&'tmp View<'v, T, track::All>>
-{
-    type AbsView = Modified<FullRawWindow<'tmp, T, track::All>>;
-
-    fn into_abstract(self) -> Self::AbsView {
-        Modified(self.0.into_abstract())
-    }
-    fn len(&self) -> Option<usize> {
-        Some((**self.0).len())
-    }
-    fn is_tracking(&self) -> bool {
-        true
-    }
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
-    }
-    #[inline]
-    fn inner_type_id(&self) -> TypeId {
-        TypeId::of::<T>()
-    }
-    fn dense(&self) -> *const EntityId {
-        self.0.dense.as_ptr()
-    }
-}
-
-impl<'a: 'b, 'b, T: Component<Tracking = track::Modification>> IntoAbstract
-    for Modified<&'b ViewMut<'a, T, track::Modification>>
-{
-    type AbsView = Modified<FullRawWindow<'b, T, track::Modification>>;
+impl<'a: 'b, 'b, T: Component> IntoAbstract for Modified<&'b ViewMut<'a, T>> {
+    type AbsView = Modified<FullRawWindow<'b, T>>;
 
     fn into_abstract(self) -> Self::AbsView {
         Modified(self.0.into_abstract())
@@ -74,7 +44,7 @@ impl<'a: 'b, 'b, T: Component<Tracking = track::Modification>> IntoAbstract
         true
     }
     fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
+        TypeId::of::<SparseSet<T>>()
     }
     #[inline]
     fn inner_type_id(&self) -> TypeId {
@@ -85,10 +55,8 @@ impl<'a: 'b, 'b, T: Component<Tracking = track::Modification>> IntoAbstract
     }
 }
 
-impl<'a: 'b, 'b, T: Component<Tracking = track::All>> IntoAbstract
-    for Modified<&'b ViewMut<'a, T, track::All>>
-{
-    type AbsView = Modified<FullRawWindow<'b, T, track::All>>;
+impl<'a: 'b, 'b, T: Component> IntoAbstract for Modified<&'b mut ViewMut<'a, T>> {
+    type AbsView = Modified<FullRawWindowMut<'b, T>>;
 
     fn into_abstract(self) -> Self::AbsView {
         Modified(self.0.into_abstract())
@@ -100,59 +68,7 @@ impl<'a: 'b, 'b, T: Component<Tracking = track::All>> IntoAbstract
         true
     }
     fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
-    }
-    #[inline]
-    fn inner_type_id(&self) -> TypeId {
-        TypeId::of::<T>()
-    }
-    fn dense(&self) -> *const EntityId {
-        self.0.dense.as_ptr()
-    }
-}
-
-impl<'a: 'b, 'b, T: Component<Tracking = track::Modification>> IntoAbstract
-    for Modified<&'b mut ViewMut<'a, T, track::Modification>>
-{
-    type AbsView = Modified<FullRawWindowMut<'b, T, track::Modification>>;
-
-    fn into_abstract(self) -> Self::AbsView {
-        Modified(self.0.into_abstract())
-    }
-    fn len(&self) -> Option<usize> {
-        Some((*self.0).len())
-    }
-    fn is_tracking(&self) -> bool {
-        true
-    }
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
-    }
-    #[inline]
-    fn inner_type_id(&self) -> TypeId {
-        TypeId::of::<T>()
-    }
-    fn dense(&self) -> *const EntityId {
-        self.0.dense.as_ptr()
-    }
-}
-
-impl<'a: 'b, 'b, T: Component<Tracking = track::All>> IntoAbstract
-    for Modified<&'b mut ViewMut<'a, T, track::All>>
-{
-    type AbsView = Modified<FullRawWindowMut<'b, T, track::All>>;
-
-    fn into_abstract(self) -> Self::AbsView {
-        Modified(self.0.into_abstract())
-    }
-    fn len(&self) -> Option<usize> {
-        Some((*self.0).len())
-    }
-    fn is_tracking(&self) -> bool {
-        true
-    }
-    fn type_id(&self) -> TypeId {
-        TypeId::of::<SparseSet<T, T::Tracking>>()
+        TypeId::of::<SparseSet<T>>()
     }
     #[inline]
     fn inner_type_id(&self) -> TypeId {

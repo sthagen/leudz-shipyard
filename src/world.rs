@@ -9,7 +9,7 @@ use crate::reserve::BulkEntityIter;
 use crate::scheduler::{Batches, Scheduler};
 use crate::sparse_set::{BulkAddEntity, TupleAddComponent, TupleDelete, TupleRemove};
 use crate::storage::{Storage, StorageId};
-use crate::{error, Component};
+use crate::{error, Component, ViewMut};
 use alloc::borrow::Cow;
 use alloc::boxed::Box;
 use alloc::sync::Arc;

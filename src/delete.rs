@@ -40,7 +40,7 @@ impl<T: Component> Delete for ViewMut<'_, T> {
     #[inline]
     fn delete(&mut self, entity: EntityId) -> bool {
         let current = self.current;
-        SparseSet::delete(&mut *self, entity, current)
+        SparseSet::private_delete(&mut *self, entity, current)
     }
 }
 
@@ -48,7 +48,7 @@ impl<T: Component> Delete for &mut ViewMut<'_, T> {
     #[inline]
     fn delete(&mut self, entity: EntityId) -> bool {
         let current = self.current;
-        SparseSet::delete(*self, entity, current)
+        SparseSet::private_delete(*self, entity, current)
     }
 }
 

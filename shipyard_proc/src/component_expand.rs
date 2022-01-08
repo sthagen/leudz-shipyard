@@ -46,8 +46,6 @@ pub(crate) fn expand_component(
     };
 
     Ok(quote!(
-        impl #impl_generics ::#shipyard_name::Component for #name #ty_generics #where_clause {
-            type Tracking = ::#shipyard_name::track::#tracking;
-        }
+        impl #impl_generics ::#shipyard_name::Component for #name #ty_generics #where_clause {}
     ))
 }

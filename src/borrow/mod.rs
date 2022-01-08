@@ -21,12 +21,12 @@ use crate::atomic_refcell::{Ref, RefMut};
 use crate::component::Component;
 use crate::error;
 use crate::sparse_set::SparseSet;
+use crate::track::{All, Inserted, InsertedOrModified, Modified};
 use crate::view::{
     AllStoragesView, AllStoragesViewMut, EntitiesView, EntitiesViewMut, UniqueView, UniqueViewMut,
     View, ViewMut,
 };
 use crate::world::World;
-use core::marker::PhantomData;
 
 /// Describes if a storage is borrowed exlusively or not.  
 /// It is used to display workloads' borrowing information.
@@ -204,17 +204,11 @@ impl<'a> Borrow<'a> for EntitiesMutBorrower {
 /// Helper struct allowing GAT-like behavior in stable.
 pub struct ViewBorrower<T>(T);
 
-impl<T: Send + Sync + Component> IntoBorrow for View<'_, T>
-where
-    T::Tracking: Send + Sync,
-{
+impl<T: Send + Sync + Component> IntoBorrow for View<'_, T> {
     type Borrow = ViewBorrower<T>;
 }
 
-impl<'a, T: Send + Sync + Component> Borrow<'a> for ViewBorrower<T>
-where
-    T::Tracking: Send + Sync,
-{
+impl<'a, T: Send + Sync + Component> Borrow<'a> for ViewBorrower<T> {
     type View = View<'a, T>;
 
     #[inline]
@@ -249,19 +243,103 @@ where
     }
 }
 
+impl<T: Send + Sync + Component> IntoBorrow for Inserted<View<'_, T>> {
+    type Borrow = Inserted<ViewBorrower<T>>;
+}
+
+impl<'a, T: Send + Sync + Component> Borrow<'a> for Inserted<ViewBorrower<T>> {
+    type View = Inserted<View<'a, T>>;
+
+    #[inline]
+    fn borrow(
+        world: &'a World,
+        last_run: Option<u32>,
+        current: u32,
+    ) -> Result<Self::View, error::GetStorage> {
+        let view = ViewBorrower::<T>::borrow(world, last_run, current)?;
+
+        if !view.is_tracking_insertion {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Insertion,
+            ));
+        }
+
+        Ok(Inserted(view))
+    }
+}
+
+impl<T: Send + Sync + Component> IntoBorrow for Modified<View<'_, T>> {
+    type Borrow = Modified<ViewBorrower<T>>;
+}
+
+impl<'a, T: Send + Sync + Component> Borrow<'a> for Modified<ViewBorrower<T>> {
+    type View = Modified<View<'a, T>>;
+
+    #[inline]
+    fn borrow(
+        world: &'a World,
+        last_run: Option<u32>,
+        current: u32,
+    ) -> Result<Self::View, error::GetStorage> {
+        let view = ViewBorrower::<T>::borrow(world, last_run, current)?;
+
+        if !view.is_tracking_modification {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Insertion,
+            ));
+        }
+
+        Ok(Modified(view))
+    }
+}
+
+impl<T: Send + Sync + Component> IntoBorrow for All<View<'_, T>> {
+    type Borrow = All<ViewBorrower<T>>;
+}
+
+impl<'a, T: Send + Sync + Component> Borrow<'a> for All<ViewBorrower<T>> {
+    type View = All<View<'a, T>>;
+
+    #[inline]
+    fn borrow(
+        world: &'a World,
+        last_run: Option<u32>,
+        current: u32,
+    ) -> Result<Self::View, error::GetStorage> {
+        let view = ViewBorrower::<T>::borrow(world, last_run, current)?;
+
+        if !view.is_tracking_insertion {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Insertion,
+            ));
+        }
+        if !view.is_tracking_modification {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Modification,
+            ));
+        }
+        if !view.is_tracking_deletion {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Deletion,
+            ));
+        }
+        if !view.is_tracking_removal {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Removal,
+            ));
+        }
+
+        Ok(All(view))
+    }
+}
+
 #[cfg(feature = "thread_local")]
-impl<T: Sync + Component> IntoBorrow for NonSend<View<'_, T>>
-where
-    T::Tracking: Sync,
-{
+impl<T: Sync + Component> IntoBorrow for NonSend<View<'_, T>> {
     type Borrow = NonSend<ViewBorrower<T>>;
 }
 
 #[cfg(feature = "thread_local")]
-impl<'a, T: Sync + Component> Borrow<'a> for NonSend<ViewBorrower<T>>
-where
-    T::Tracking: Sync,
-{
+impl<'a, T: Sync + Component> Borrow<'a> for NonSend<ViewBorrower<T>> {
     type View = NonSend<View<'a, T>>;
 
     #[inline]
@@ -296,18 +374,12 @@ where
 }
 
 #[cfg(feature = "thread_local")]
-impl<T: Send + Component> IntoBorrow for NonSync<View<'_, T>>
-where
-    T::Tracking: Send,
-{
+impl<T: Send + Component> IntoBorrow for NonSync<View<'_, T>> {
     type Borrow = NonSync<ViewBorrower<T>>;
 }
 
 #[cfg(feature = "thread_local")]
-impl<'a, T: Send + Component> Borrow<'a> for NonSync<ViewBorrower<T>>
-where
-    T::Tracking: Send,
-{
+impl<'a, T: Send + Component> Borrow<'a> for NonSync<ViewBorrower<T>> {
     type View = NonSync<View<'a, T>>;
 
     #[inline]
@@ -384,17 +456,11 @@ impl<'a, T: Component> Borrow<'a> for NonSendSync<ViewBorrower<T>> {
 /// Helper struct allowing GAT-like behavior in stable.
 pub struct ViewMutBorrower<T>(T);
 
-impl<T: Send + Sync + Component> IntoBorrow for ViewMut<'_, T>
-where
-    T::Tracking: Send + Sync,
-{
+impl<T: Send + Sync + Component> IntoBorrow for ViewMut<'_, T> {
     type Borrow = ViewMutBorrower<T>;
 }
 
-impl<'a, T: Send + Sync + Component> Borrow<'a> for ViewMutBorrower<T>
-where
-    T::Tracking: Send + Sync,
-{
+impl<'a, T: Send + Sync + Component> Borrow<'a> for ViewMutBorrower<T> {
     type View = ViewMut<'a, T>;
 
     #[inline]
@@ -429,19 +495,103 @@ where
     }
 }
 
+impl<T: Send + Sync + Component> IntoBorrow for Inserted<ViewMut<'_, T>> {
+    type Borrow = Inserted<ViewMutBorrower<T>>;
+}
+
+impl<'a, T: Send + Sync + Component> Borrow<'a> for Inserted<ViewMutBorrower<T>> {
+    type View = Inserted<ViewMut<'a, T>>;
+
+    #[inline]
+    fn borrow(
+        world: &'a World,
+        last_run: Option<u32>,
+        current: u32,
+    ) -> Result<Self::View, error::GetStorage> {
+        let view = ViewMutBorrower::<T>::borrow(world, last_run, current)?;
+
+        if !view.is_tracking_insertion {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Insertion,
+            ));
+        }
+
+        Ok(Inserted(view))
+    }
+}
+
+impl<T: Send + Sync + Component> IntoBorrow for Modified<ViewMut<'_, T>> {
+    type Borrow = Modified<ViewMutBorrower<T>>;
+}
+
+impl<'a, T: Send + Sync + Component> Borrow<'a> for Modified<ViewMutBorrower<T>> {
+    type View = Modified<ViewMut<'a, T>>;
+
+    #[inline]
+    fn borrow(
+        world: &'a World,
+        last_run: Option<u32>,
+        current: u32,
+    ) -> Result<Self::View, error::GetStorage> {
+        let view = ViewMutBorrower::<T>::borrow(world, last_run, current)?;
+
+        if !view.is_tracking_modification {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Insertion,
+            ));
+        }
+
+        Ok(Modified(view))
+    }
+}
+
+impl<T: Send + Sync + Component> IntoBorrow for All<ViewMut<'_, T>> {
+    type Borrow = All<ViewMutBorrower<T>>;
+}
+
+impl<'a, T: Send + Sync + Component> Borrow<'a> for All<ViewMutBorrower<T>> {
+    type View = All<ViewMut<'a, T>>;
+
+    #[inline]
+    fn borrow(
+        world: &'a World,
+        last_run: Option<u32>,
+        current: u32,
+    ) -> Result<Self::View, error::GetStorage> {
+        let view = ViewMutBorrower::<T>::borrow(world, last_run, current)?;
+
+        if !view.is_tracking_insertion {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Insertion,
+            ));
+        }
+        if !view.is_tracking_modification {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Modification,
+            ));
+        }
+        if !view.is_tracking_deletion {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Deletion,
+            ));
+        }
+        if !view.is_tracking_removal {
+            return Err(error::GetStorage::TrackingNotSetup(
+                error::TrackingNotSetup::Removal,
+            ));
+        }
+
+        Ok(All(view))
+    }
+}
+
 #[cfg(feature = "thread_local")]
-impl<T: Sync + Component> IntoBorrow for NonSend<ViewMut<'_, T>>
-where
-    T::Tracking: Sync,
-{
+impl<T: Sync + Component> IntoBorrow for NonSend<ViewMut<'_, T>> {
     type Borrow = NonSend<ViewMutBorrower<T>>;
 }
 
 #[cfg(feature = "thread_local")]
-impl<'a, T: Sync + Component> Borrow<'a> for NonSend<ViewMutBorrower<T>>
-where
-    T::Tracking: Sync,
-{
+impl<'a, T: Sync + Component> Borrow<'a> for NonSend<ViewMutBorrower<T>> {
     type View = NonSend<ViewMut<'a, T>>;
 
     #[inline]
@@ -476,18 +626,12 @@ where
 }
 
 #[cfg(feature = "thread_local")]
-impl<T: Send + Component> IntoBorrow for NonSync<ViewMut<'_, T>>
-where
-    T::Tracking: Send,
-{
+impl<T: Send + Component> IntoBorrow for NonSync<ViewMut<'_, T>> {
     type Borrow = NonSync<ViewMutBorrower<T>>;
 }
 
 #[cfg(feature = "thread_local")]
-impl<'a, T: Send + Component> Borrow<'a> for NonSync<ViewMutBorrower<T>>
-where
-    T::Tracking: Send,
-{
+impl<'a, T: Send + Component> Borrow<'a> for NonSync<ViewMutBorrower<T>> {
     type View = NonSync<ViewMut<'a, T>>;
 
     #[inline]
@@ -594,7 +738,6 @@ impl<'a, T: Send + Sync + Component> Borrow<'a> for UniqueViewBorrower<T> {
             unique,
             borrow: Some(borrow),
             all_borrow: Some(all_borrow),
-            _phantom: PhantomData,
         })
     }
 }
@@ -631,7 +774,6 @@ impl<'a, T: Sync + Component> Borrow<'a> for NonSend<UniqueViewBorrower<T>> {
             unique,
             borrow: Some(borrow),
             all_borrow: Some(all_borrow),
-            _phantom: PhantomData,
         }))
     }
 }
@@ -668,7 +810,6 @@ impl<'a, T: Send + Component> Borrow<'a> for NonSync<UniqueViewBorrower<T>> {
             unique,
             borrow: Some(borrow),
             all_borrow: Some(all_borrow),
-            _phantom: PhantomData,
         }))
     }
 }
@@ -705,7 +846,6 @@ impl<'a, T: Component> Borrow<'a> for NonSendSync<UniqueViewBorrower<T>> {
             unique,
             borrow: Some(borrow),
             all_borrow: Some(all_borrow),
-            _phantom: PhantomData,
         }))
     }
 }
@@ -743,7 +883,6 @@ impl<'a, T: Send + Sync + Component> Borrow<'a> for UniqueViewMutBorrower<T> {
             unique,
             _borrow: Some(borrow),
             _all_borrow: Some(all_borrow),
-            _phantom: PhantomData,
         })
     }
 }
@@ -780,7 +919,6 @@ impl<'a, T: Sync + Component> Borrow<'a> for NonSend<UniqueViewMutBorrower<T>> {
             unique,
             _borrow: Some(borrow),
             _all_borrow: Some(all_borrow),
-            _phantom: PhantomData,
         }))
     }
 }
@@ -817,7 +955,6 @@ impl<'a, T: Send + Component> Borrow<'a> for NonSync<UniqueViewMutBorrower<T>> {
             unique,
             _borrow: Some(borrow),
             _all_borrow: Some(all_borrow),
-            _phantom: PhantomData,
         }))
     }
 }
@@ -854,7 +991,6 @@ impl<'a, T: Component> Borrow<'a> for NonSendSync<UniqueViewMutBorrower<T>> {
             unique,
             _borrow: Some(borrow),
             _all_borrow: Some(all_borrow),
-            _phantom: PhantomData,
         }))
     }
 }

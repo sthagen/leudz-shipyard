@@ -88,9 +88,9 @@ unsafe impl<'a> BorrowInfo for EntitiesViewMut<'a> {
 unsafe impl<'a, T: Send + Sync + Component> BorrowInfo for View<'a, T> {
     fn borrow_info(info: &mut Vec<TypeInfo>) {
         info.push(TypeInfo {
-            name: type_name::<SparseSet<T, T::Tracking>>(),
+            name: type_name::<SparseSet<T>>(),
             mutability: Mutability::Shared,
-            storage_id: StorageId::of::<SparseSet<T, T::Tracking>>(),
+            storage_id: StorageId::of::<SparseSet<T>>(),
             thread_safe: true,
         });
     }
@@ -100,9 +100,9 @@ unsafe impl<'a, T: Send + Sync + Component> BorrowInfo for View<'a, T> {
 unsafe impl<'a, T: Sync + Component> BorrowInfo for NonSend<View<'a, T>> {
     fn borrow_info(info: &mut Vec<TypeInfo>) {
         info.push(TypeInfo {
-            name: type_name::<SparseSet<T, T::Tracking>>(),
+            name: type_name::<SparseSet<T>>(),
             mutability: Mutability::Shared,
-            storage_id: StorageId::of::<SparseSet<T, T::Tracking>>(),
+            storage_id: StorageId::of::<SparseSet<T>>(),
             thread_safe: true,
         });
     }
@@ -112,9 +112,9 @@ unsafe impl<'a, T: Sync + Component> BorrowInfo for NonSend<View<'a, T>> {
 unsafe impl<'a, T: Send + Component> BorrowInfo for NonSync<View<'a, T>> {
     fn borrow_info(info: &mut Vec<TypeInfo>) {
         info.push(TypeInfo {
-            name: type_name::<SparseSet<T, T::Tracking>>(),
+            name: type_name::<SparseSet<T>>(),
             mutability: Mutability::Shared,
-            storage_id: StorageId::of::<SparseSet<T, T::Tracking>>(),
+            storage_id: StorageId::of::<SparseSet<T>>(),
             thread_safe: false,
         });
     }
@@ -124,9 +124,9 @@ unsafe impl<'a, T: Send + Component> BorrowInfo for NonSync<View<'a, T>> {
 unsafe impl<'a, T: Component> BorrowInfo for NonSendSync<View<'a, T>> {
     fn borrow_info(info: &mut Vec<TypeInfo>) {
         info.push(TypeInfo {
-            name: type_name::<SparseSet<T, T::Tracking>>(),
+            name: type_name::<SparseSet<T>>(),
             mutability: Mutability::Shared,
-            storage_id: StorageId::of::<SparseSet<T, T::Tracking>>(),
+            storage_id: StorageId::of::<SparseSet<T>>(),
             thread_safe: false,
         });
     }
@@ -135,9 +135,9 @@ unsafe impl<'a, T: Component> BorrowInfo for NonSendSync<View<'a, T>> {
 unsafe impl<'a, T: Send + Sync + Component> BorrowInfo for ViewMut<'a, T> {
     fn borrow_info(info: &mut Vec<TypeInfo>) {
         info.push(TypeInfo {
-            name: type_name::<SparseSet<T, T::Tracking>>(),
+            name: type_name::<SparseSet<T>>(),
             mutability: Mutability::Exclusive,
-            storage_id: StorageId::of::<SparseSet<T, T::Tracking>>(),
+            storage_id: StorageId::of::<SparseSet<T>>(),
             thread_safe: true,
         });
     }
@@ -147,9 +147,9 @@ unsafe impl<'a, T: Send + Sync + Component> BorrowInfo for ViewMut<'a, T> {
 unsafe impl<'a, T: Sync + Component> BorrowInfo for NonSend<ViewMut<'a, T>> {
     fn borrow_info(info: &mut Vec<TypeInfo>) {
         info.push(TypeInfo {
-            name: type_name::<SparseSet<T, T::Tracking>>(),
+            name: type_name::<SparseSet<T>>(),
             mutability: Mutability::Exclusive,
-            storage_id: StorageId::of::<SparseSet<T, T::Tracking>>(),
+            storage_id: StorageId::of::<SparseSet<T>>(),
             thread_safe: false,
         });
     }
@@ -159,9 +159,9 @@ unsafe impl<'a, T: Sync + Component> BorrowInfo for NonSend<ViewMut<'a, T>> {
 unsafe impl<'a, T: Send + Component> BorrowInfo for NonSync<ViewMut<'a, T>> {
     fn borrow_info(info: &mut Vec<TypeInfo>) {
         info.push(TypeInfo {
-            name: type_name::<SparseSet<T, T::Tracking>>(),
+            name: type_name::<SparseSet<T>>(),
             mutability: Mutability::Exclusive,
-            storage_id: StorageId::of::<SparseSet<T, T::Tracking>>(),
+            storage_id: StorageId::of::<SparseSet<T>>(),
             thread_safe: true,
         });
     }
@@ -171,9 +171,9 @@ unsafe impl<'a, T: Send + Component> BorrowInfo for NonSync<ViewMut<'a, T>> {
 unsafe impl<'a, T: Component> BorrowInfo for NonSendSync<ViewMut<'a, T>> {
     fn borrow_info(info: &mut Vec<TypeInfo>) {
         info.push(TypeInfo {
-            name: type_name::<SparseSet<T, T::Tracking>>(),
+            name: type_name::<SparseSet<T>>(),
             mutability: Mutability::Exclusive,
-            storage_id: StorageId::of::<SparseSet<T, T::Tracking>>(),
+            storage_id: StorageId::of::<SparseSet<T>>(),
             thread_safe: false,
         });
     }

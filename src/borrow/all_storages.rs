@@ -1,5 +1,3 @@
-use core::marker::PhantomData;
-
 #[cfg(feature = "thread_local")]
 use super::NonSend;
 #[cfg(feature = "thread_local")]
@@ -79,10 +77,7 @@ impl<'a> AllStoragesBorrow<'a> for EntitiesMutBorrower {
     }
 }
 
-impl<'a, T: Send + Sync + Component> AllStoragesBorrow<'a> for ViewBorrower<T>
-where
-    T::Tracking: Send + Sync,
-{
+impl<'a, T: Send + Sync + Component> AllStoragesBorrow<'a> for ViewBorrower<T> {
     #[inline]
     fn all_borrow(
         all_storages: &'a AllStorages,
@@ -107,10 +102,7 @@ where
 }
 
 #[cfg(feature = "thread_local")]
-impl<'a, T: Sync + Component> AllStoragesBorrow<'a> for NonSend<ViewBorrower<T>>
-where
-    T::Tracking: Sync,
-{
+impl<'a, T: Sync + Component> AllStoragesBorrow<'a> for NonSend<ViewBorrower<T>> {
     #[inline]
     fn all_borrow(
         all_storages: &'a AllStorages,
@@ -134,10 +126,7 @@ where
 }
 
 #[cfg(feature = "thread_local")]
-impl<'a, T: Send + Component> AllStoragesBorrow<'a> for NonSync<ViewBorrower<T>>
-where
-    T::Tracking: Send,
-{
+impl<'a, T: Send + Component> AllStoragesBorrow<'a> for NonSync<ViewBorrower<T>> {
     #[inline]
     fn all_borrow(
         all_storages: &'a AllStorages,
@@ -184,10 +173,7 @@ impl<'a, T: Component> AllStoragesBorrow<'a> for NonSendSync<ViewBorrower<T>> {
     }
 }
 
-impl<'a, T: Send + Sync + Component> AllStoragesBorrow<'a> for ViewMutBorrower<T>
-where
-    T::Tracking: Send + Sync,
-{
+impl<'a, T: Send + Sync + Component> AllStoragesBorrow<'a> for ViewMutBorrower<T> {
     #[inline]
     fn all_borrow(
         all_storages: &'a AllStorages,
@@ -212,10 +198,7 @@ where
 }
 
 #[cfg(feature = "thread_local")]
-impl<'a, T: Sync + Component> AllStoragesBorrow<'a> for NonSend<ViewMutBorrower<T>>
-where
-    T::Tracking: Sync,
-{
+impl<'a, T: Sync + Component> AllStoragesBorrow<'a> for NonSend<ViewMutBorrower<T>> {
     #[inline]
     fn all_borrow(
         all_storages: &'a AllStorages,
@@ -239,10 +222,7 @@ where
 }
 
 #[cfg(feature = "thread_local")]
-impl<'a, T: Send + Component> AllStoragesBorrow<'a> for NonSync<ViewMutBorrower<T>>
-where
-    T::Tracking: Send,
-{
+impl<'a, T: Send + Component> AllStoragesBorrow<'a> for NonSync<ViewMutBorrower<T>> {
     #[inline]
     fn all_borrow(
         all_storages: &'a AllStorages,
@@ -304,7 +284,6 @@ impl<'a, T: Send + Sync + Component> AllStoragesBorrow<'a> for UniqueViewBorrowe
             unique,
             borrow: Some(borrow),
             all_borrow: None,
-            _phantom: PhantomData,
         })
     }
 }
@@ -325,7 +304,6 @@ impl<'a, T: Sync + Component> AllStoragesBorrow<'a> for NonSend<UniqueViewBorrow
             unique,
             borrow: Some(borrow),
             all_borrow: None,
-            _phantom: PhantomData,
         }))
     }
 }
@@ -346,7 +324,6 @@ impl<'a, T: Send + Component> AllStoragesBorrow<'a> for NonSync<UniqueViewBorrow
             unique,
             borrow: Some(borrow),
             all_borrow: None,
-            _phantom: PhantomData,
         }))
     }
 }
@@ -367,7 +344,6 @@ impl<'a, T: Component> AllStoragesBorrow<'a> for NonSendSync<UniqueViewBorrower<
             unique,
             borrow: Some(borrow),
             all_borrow: None,
-            _phantom: PhantomData,
         }))
     }
 }
@@ -387,7 +363,6 @@ impl<'a, T: Send + Sync + Component> AllStoragesBorrow<'a> for UniqueViewMutBorr
             unique,
             _borrow: Some(borrow),
             _all_borrow: None,
-            _phantom: PhantomData,
         })
     }
 }
@@ -408,7 +383,6 @@ impl<'a, T: Sync + Component> AllStoragesBorrow<'a> for NonSend<UniqueViewMutBor
             unique,
             _borrow: Some(borrow),
             _all_borrow: None,
-            _phantom: PhantomData,
         }))
     }
 }
@@ -429,7 +403,6 @@ impl<'a, T: Send + Component> AllStoragesBorrow<'a> for NonSync<UniqueViewMutBor
             unique,
             _borrow: Some(borrow),
             _all_borrow: None,
-            _phantom: PhantomData,
         }))
     }
 }
@@ -450,7 +423,6 @@ impl<'a, T: Component> AllStoragesBorrow<'a> for NonSendSync<UniqueViewMutBorrow
             unique,
             _borrow: Some(borrow),
             _all_borrow: None,
-            _phantom: PhantomData,
         }))
     }
 }

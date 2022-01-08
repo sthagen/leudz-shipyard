@@ -1,13 +1,11 @@
 use shipyard::*;
 
+#[derive(PartialEq, Eq, Debug)]
+struct U32(u32);
+impl Component for U32 {}
+
 #[test]
 fn no_pack() {
-    #[derive(PartialEq, Eq, Debug)]
-    struct U32(u32);
-    impl Component for U32 {
-        type Tracking = track::Untracked;
-    }
-
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 
     world
@@ -25,26 +23,24 @@ fn no_pack() {
 
 #[test]
 fn update() {
-    #[derive(PartialEq, Eq, Debug)]
-    struct U32(u32);
-    impl Component for U32 {
-        type Tracking = track::All;
-    }
-
     let world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 
+    world.borrow::<ViewMut<U32>>().unwrap().track_insertion();
+
     let entity0 = world
-        .run(|mut entities: EntitiesViewMut, mut u32s: ViewMut<U32>| {
-            let entity0 = entities.add_entity(&mut u32s, U32(0));
+        .run(
+            |mut entities: EntitiesViewMut, mut u32s: Inserted<ViewMut<U32>>| {
+                let entity0 = entities.add_entity(&mut u32s, U32(0));
 
-            u32s.clear_all_inserted();
+                u32s.clear_all_inserted();
 
-            entity0
-        })
+                entity0
+            },
+        )
         .unwrap();
 
     world
-        .run(|mut entities: EntitiesViewMut, mut u32s: ViewMut<U32>| {
+        .run(|mut entities: EntitiesViewMut, mut u32s: Inserted<ViewMut<U32>>| {
             let entity1 = entities.add_entity(&mut u32s, U32(1));
 
             u32s.apply_mut(entity0, entity1, core::mem::swap);

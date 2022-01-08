@@ -6,7 +6,7 @@ use crate::sparse_set::SparseSet;
 use crate::type_id::TypeId;
 use crate::view::AllStoragesView;
 use crate::world::World;
-use crate::{error, track, Component, Unique};
+use crate::{error, Component, Unique};
 use alloc::borrow::Cow;
 // this is the macro, not the module
 use crate::storage::StorageId;
@@ -735,10 +735,7 @@ impl WorkloadBuilder {
         world: &World,
     ) -> Result<(), error::UniquePresence> {
         struct ComponentType;
-
-        impl Component for ComponentType {
-            type Tracking = track::Untracked;
-        }
+        impl Component for ComponentType {}
 
         let all_storages = world
             .all_storages
@@ -1239,21 +1236,14 @@ impl WorkloadBuilder {
 mod tests {
     use super::*;
     use crate::component::Component;
-    use crate::track;
 
     struct Usize(usize);
     struct U32(u32);
     struct U16(u16);
 
-    impl Component for Usize {
-        type Tracking = track::Untracked;
-    }
-    impl Component for U32 {
-        type Tracking = track::Untracked;
-    }
-    impl Component for U16 {
-        type Tracking = track::Untracked;
-    }
+    impl Component for Usize {}
+    impl Component for U32 {}
+    impl Component for U16 {}
 
     #[test]
     fn single_immutable() {
@@ -1551,9 +1541,7 @@ mod tests {
 
         struct NotSend(*const ());
         unsafe impl Sync for NotSend {}
-        impl Component for NotSend {
-            type Tracking = track::Untracked;
-        }
+        impl Component for NotSend {}
 
         fn sys1(_: NonSend<View<'_, NotSend>>) {}
         fn sys2(_: NonSend<ViewMut<'_, NotSend>>) {}

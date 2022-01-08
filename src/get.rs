@@ -1,9 +1,9 @@
 use crate::component::Component;
 use crate::entity_id::EntityId;
+use crate::error;
 use crate::r#mut::Mut;
 use crate::sparse_set::SparseSet;
 use crate::view::{View, ViewMut};
-use crate::{error, track};
 use core::any::type_name;
 
 /// Retrives components based on their type and entity id.
@@ -62,81 +62,7 @@ impl<'a, 'b, T: Component> Get for &'b ViewMut<'a, T> {
     }
 }
 
-impl<'a, 'b, T: Component<Tracking = track::Untracked>> Get
-    for &'b mut ViewMut<'a, T, track::Untracked>
-{
-    type Out = &'b mut T;
-
-    #[inline]
-    fn get(self, entity: EntityId) -> Result<Self::Out, error::MissingComponent> {
-        let index = self
-            .index_of(entity)
-            .ok_or_else(|| error::MissingComponent {
-                id: entity,
-                name: type_name::<T>(),
-            })?;
-
-        Ok(unsafe { self.data.get_unchecked_mut(index) })
-    }
-}
-
-impl<'a, 'b, T: Component<Tracking = track::Insertion>> Get
-    for &'b mut ViewMut<'a, T, track::Insertion>
-{
-    type Out = &'b mut T;
-
-    #[inline]
-    fn get(self, entity: EntityId) -> Result<Self::Out, error::MissingComponent> {
-        let index = self
-            .index_of(entity)
-            .ok_or_else(|| error::MissingComponent {
-                id: entity,
-                name: type_name::<T>(),
-            })?;
-
-        Ok(unsafe { self.data.get_unchecked_mut(index) })
-    }
-}
-
-impl<'a, 'b, T: Component<Tracking = track::Deletion>> Get
-    for &'b mut ViewMut<'a, T, track::Deletion>
-{
-    type Out = &'b mut T;
-
-    #[inline]
-    fn get(self, entity: EntityId) -> Result<Self::Out, error::MissingComponent> {
-        let index = self
-            .index_of(entity)
-            .ok_or_else(|| error::MissingComponent {
-                id: entity,
-                name: type_name::<T>(),
-            })?;
-
-        Ok(unsafe { self.data.get_unchecked_mut(index) })
-    }
-}
-
-impl<'a, 'b, T: Component<Tracking = track::Removal>> Get
-    for &'b mut ViewMut<'a, T, track::Removal>
-{
-    type Out = &'b mut T;
-
-    #[inline]
-    fn get(self, entity: EntityId) -> Result<Self::Out, error::MissingComponent> {
-        let index = self
-            .index_of(entity)
-            .ok_or_else(|| error::MissingComponent {
-                id: entity,
-                name: type_name::<T>(),
-            })?;
-
-        Ok(unsafe { self.data.get_unchecked_mut(index) })
-    }
-}
-
-impl<'a, 'b, T: Component<Tracking = track::Modification>> Get
-    for &'b mut ViewMut<'a, T, track::Modification>
-{
+impl<'a, 'b, T: Component> Get for &'b mut ViewMut<'a, T> {
     type Out = Mut<'b, T>;
 
     #[inline]
@@ -151,40 +77,23 @@ impl<'a, 'b, T: Component<Tracking = track::Modification>> Get
         let SparseSet {
             data,
             modification_data,
+            is_tracking_modification,
             ..
         } = self.sparse_set;
 
-        Ok(Mut {
-            flag: Some(unsafe { modification_data.get_unchecked_mut(index) }),
-            current: self.current,
-            data: unsafe { data.get_unchecked_mut(index) },
-        })
-    }
-}
-
-impl<'a, 'b, T: Component<Tracking = track::All>> Get for &'b mut ViewMut<'a, T, track::All> {
-    type Out = Mut<'b, T>;
-
-    #[inline]
-    fn get(self, entity: EntityId) -> Result<Self::Out, error::MissingComponent> {
-        let index = self
-            .index_of(entity)
-            .ok_or_else(|| error::MissingComponent {
-                id: entity,
-                name: type_name::<T>(),
-            })?;
-
-        let SparseSet {
-            data,
-            modification_data,
-            ..
-        } = self.sparse_set;
-
-        Ok(Mut {
-            flag: Some(unsafe { modification_data.get_unchecked_mut(index) }),
-            current: self.current,
-            data: unsafe { data.get_unchecked_mut(index) },
-        })
+        if *is_tracking_modification {
+            Ok(Mut {
+                flag: Some(unsafe { modification_data.get_unchecked_mut(index) }),
+                current: self.current,
+                data: unsafe { data.get_unchecked_mut(index) },
+            })
+        } else {
+            Ok(Mut {
+                flag: None,
+                current: 0,
+                data: unsafe { data.get_unchecked_mut(index) },
+            })
+        }
     }
 }
 

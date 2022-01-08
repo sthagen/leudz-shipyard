@@ -2,20 +2,16 @@ use core::any::type_name;
 use shipyard::error;
 use shipyard::*;
 
-#[derive(PartialEq, Eq, Debug)]
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
+struct USIZE(usize);
+impl Component for USIZE {}
+
+#[derive(PartialEq, Eq, Debug, Clone, Copy)]
 struct U32(u32);
-impl Component for U32 {
-    type Tracking = track::Untracked;
-}
+impl Component for U32 {}
 
 #[test]
 fn no_pack() {
-    #[derive(PartialEq, Eq, Debug)]
-    struct USIZE(usize);
-    impl Component for USIZE {
-        type Tracking = track::Untracked;
-    }
-
     let mut world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 
     let entity1 = world.add_entity((USIZE(0), U32(1u32)));
@@ -39,13 +35,9 @@ fn no_pack() {
 
 #[test]
 fn update() {
-    #[derive(PartialEq, Eq, Debug)]
-    struct USIZE(usize);
-    impl Component for USIZE {
-        type Tracking = track::All;
-    }
-
     let mut world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
+
+    world.borrow::<ViewMut<USIZE>>().unwrap().track_all();
 
     let entity1 = world.add_entity((USIZE(0usize),));
     let entity2 = world.add_entity((USIZE(2usize),));
@@ -54,7 +46,7 @@ fn update() {
     assert_eq!(component, Some(USIZE(0)));
 
     world
-        .run(|usizes: View<USIZE>| {
+        .run(|usizes: All<View<USIZE>>| {
             assert_eq!(
                 usizes.get(entity1),
                 Err(error::MissingComponent {
@@ -73,7 +65,7 @@ fn update() {
     world.remove::<(USIZE,)>(entity2);
 
     world
-        .run(|usizes: View<USIZE>| {
+        .run(|usizes: All<View<USIZE>>| {
             assert_eq!(usizes.removed().collect::<Vec<_>>(), vec![entity1, entity2]);
         })
         .unwrap();
@@ -81,12 +73,6 @@ fn update() {
 
 #[test]
 fn old_key() {
-    #[derive(PartialEq, Eq, Debug)]
-    struct USIZE(usize);
-    impl Component for USIZE {
-        type Tracking = track::Untracked;
-    }
-
     let mut world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 
     let entity = world.add_entity((USIZE(0), U32(1)));
@@ -100,12 +86,6 @@ fn old_key() {
 
 #[test]
 fn newer_key() {
-    #[derive(PartialEq, Eq, Debug)]
-    struct USIZE(usize);
-    impl Component for USIZE {
-        type Tracking = track::Untracked;
-    }
-
     let mut world = World::new_with_custom_lock::<parking_lot::RawRwLock>();
 
     let entity = world.add_entity((USIZE(0), U32(1)));
