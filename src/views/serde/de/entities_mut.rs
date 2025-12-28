@@ -1,15 +1,18 @@
 use crate::entity_id::EntityId;
 use crate::views::EntitiesViewMut;
 use core::fmt;
-use serde::de::Visitor;
-use serde::ser::SerializeSeq;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::de::{DeserializeSeed, Visitor};
+use serde::{Deserialize, Deserializer};
 
+/// Builder to customize [`EntitiesViewMut`]'s deserialization format.
+///
+/// Make sure to match the configuration used when serializing.
 pub struct EntitiesViewMutDeserializer<'tmp, 'view> {
     entities: &'tmp mut EntitiesViewMut<'view>,
 }
 
 impl<'tmp, 'view> EntitiesViewMutDeserializer<'tmp, 'view> {
+    #[allow(missing_docs)]
     pub fn new(
         entities: &'tmp mut EntitiesViewMut<'view>,
     ) -> EntitiesViewMutDeserializer<'tmp, 'view> {
@@ -17,37 +20,18 @@ impl<'tmp, 'view> EntitiesViewMutDeserializer<'tmp, 'view> {
     }
 }
 
-impl<'a> Serialize for EntitiesViewMut<'a> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        let mut seq = serializer.serialize_seq(None)?;
+impl<'tmp, 'view, 'de: 'view> DeserializeSeed<'de> for EntitiesViewMutDeserializer<'tmp, 'view> {
+    type Value = ();
 
-        self.iter()
-            .try_for_each(|eid| seq.serialize_element(&eid))?;
-
-        seq.end()
-    }
-}
-
-impl<'tmp, 'view, 'de: 'view> Deserialize<'de> for EntitiesViewMutDeserializer<'tmp, 'view> {
-    fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
+    fn deserialize<D>(self, deserializer: D) -> Result<(), D::Error>
     where
         D: Deserializer<'de>,
     {
-        panic!("ViewMut cannot be directly deserialized. Use deserialize_in_place instead.")
-    }
-
-    fn deserialize_in_place<D>(deserializer: D, place: &mut Self) -> Result<(), D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        struct SeqVisitor<'tmp2, 'tmp, 'view> {
-            place: &'tmp2 mut EntitiesViewMutDeserializer<'tmp, 'view>,
+        struct SeqVisitor<'tmp, 'view> {
+            place: EntitiesViewMutDeserializer<'tmp, 'view>,
         }
 
-        impl<'tmp2, 'tmp, 'view, 'de: 'view> Visitor<'de> for SeqVisitor<'tmp2, 'tmp, 'view> {
+        impl<'tmp2, 'tmp, 'view, 'de: 'view> Visitor<'de> for SeqVisitor<'tmp, 'view> {
             type Value = ();
 
             fn expecting(&self, formatter: &mut fmt::Formatter<'_>) -> fmt::Result {
@@ -66,7 +50,7 @@ impl<'tmp, 'view, 'de: 'view> Deserialize<'de> for EntitiesViewMutDeserializer<'
             }
         }
 
-        deserializer.deserialize_seq(SeqVisitor { place })
+        deserializer.deserialize_seq(SeqVisitor { place: self })
     }
 }
 
@@ -82,7 +66,7 @@ impl<'view, 'de: 'view> Deserialize<'de> for EntitiesViewMut<'view> {
     where
         D: Deserializer<'de>,
     {
-        let mut entities_view_mut_deserializer = EntitiesViewMutDeserializer::new(place);
-        Deserialize::deserialize_in_place(deserializer, &mut entities_view_mut_deserializer)
+        let entities_view_mut_deserializer = EntitiesViewMutDeserializer::new(place);
+        DeserializeSeed::deserialize(entities_view_mut_deserializer, deserializer)
     }
 }

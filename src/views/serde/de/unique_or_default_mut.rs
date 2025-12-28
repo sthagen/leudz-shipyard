@@ -1,17 +1,11 @@
 use crate::component::Unique;
 use crate::views::UniqueOrDefaultViewMut;
-use serde::de::DeserializeOwned;
-use serde::{Deserialize, Deserializer, Serialize, Serializer};
+use serde::de::{DeserializeOwned, DeserializeSeed};
+use serde::{Deserialize, Deserializer};
 
-impl<'a, T: Unique + Default + Serialize> Serialize for UniqueOrDefaultViewMut<'a, T> {
-    fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-    where
-        S: Serializer,
-    {
-        (**self).serialize(serializer)
-    }
-}
-
+/// Builder to customize [`UniqueOrDefaultViewMut`]'s deserialization format.
+///
+/// Make sure to match the configuration used when serializing.
 pub struct UniqueViewOrDefaultMutDeserializer<'tmp, 'view, T: Unique + Default> {
     unique: &'tmp mut UniqueOrDefaultViewMut<'view, T>,
 }
@@ -22,23 +16,18 @@ impl<'tmp, 'view, T: Unique + Default> UniqueViewOrDefaultMutDeserializer<'tmp, 
     }
 }
 
-impl<'tmp, 'view, 'de: 'view, T: Unique + Default> Deserialize<'de>
+impl<'tmp, 'view, 'de: 'view, T: Unique + Default> DeserializeSeed<'de>
     for UniqueViewOrDefaultMutDeserializer<'tmp, 'view, T>
 where
     T: DeserializeOwned,
 {
-    fn deserialize<D>(_deserializer: D) -> Result<Self, D::Error>
-    where
-        D: Deserializer<'de>,
-    {
-        panic!("UniqueViewMut cannot be directly deserialized. Use deserialize_in_place instead.")
-    }
+    type Value = ();
 
-    fn deserialize_in_place<D>(deserializer: D, place: &mut Self) -> Result<(), D::Error>
+    fn deserialize<D>(self, deserializer: D) -> Result<(), D::Error>
     where
         D: Deserializer<'de>,
     {
-        Deserialize::deserialize_in_place(deserializer, &mut (**place.unique))
+        Deserialize::deserialize_in_place(deserializer, &mut (**self.unique))
     }
 }
 
@@ -57,7 +46,7 @@ where
     where
         D: Deserializer<'de>,
     {
-        let mut unique_view_mut_deserializer = UniqueViewOrDefaultMutDeserializer::new(place);
-        Deserialize::deserialize_in_place(deserializer, &mut unique_view_mut_deserializer)
+        let unique_view_mut_deserializer = UniqueViewOrDefaultMutDeserializer::new(place);
+        DeserializeSeed::deserialize(unique_view_mut_deserializer, deserializer)
     }
 }
