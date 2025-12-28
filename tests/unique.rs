@@ -1,8 +1,9 @@
 use core::any::type_name;
-use shipyard::advanced::{
-    StorageId, UniqueOrDefaultView, UniqueOrDefaultViewMut, UniqueOrInitView, UniqueOrInitViewMut,
-};
+use shipyard::advanced::StorageId;
 use shipyard::error;
+use shipyard::views::{
+    UniqueOrDefaultView, UniqueOrDefaultViewMut, UniqueOrInitView, UniqueOrInitViewMut,
+};
 use shipyard::*;
 
 #[derive(Default, Debug, PartialEq)]

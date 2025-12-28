@@ -17,6 +17,3 @@ pub mod tracking;
 pub use crate::entities::Entities;
 pub use crate::r#mut::Mut;
 pub use crate::storage::{SBoxBuilder, Storage, StorageId};
-pub use crate::views::{
-    UniqueOrDefaultView, UniqueOrDefaultViewMut, UniqueOrInitView, UniqueOrInitViewMut,
-};

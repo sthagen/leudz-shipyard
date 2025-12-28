@@ -79,7 +79,8 @@ mod storage;
 /// Module related to storage tracking, like insertion or modification.
 pub mod track;
 mod unique;
-mod views;
+/// Contains all view types used to borrow components in a [`World`].
+pub mod views;
 /// Contains all data this library will manipulate.
 pub mod world;
 
@@ -100,6 +101,7 @@ pub use scheduler::{IntoWorkload, Workload};
 #[cfg(feature = "proc")]
 pub use shipyard_proc::{Borrow, BorrowInfo, Component, IntoIter, Label, Unique, WorldBorrow};
 pub use unique::UniqueStorage;
+#[doc(inline)]
 pub use views::{
     AllStoragesView, AllStoragesViewMut, EntitiesView, EntitiesViewMut, UniqueView, UniqueViewMut,
     View, ViewMut,
