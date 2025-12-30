@@ -164,8 +164,8 @@ impl<'tmp, 'view, 'de: 'view> serde::de::DeserializeSeed<'de>
 // ANCHOR_END: fields
 
 // ANCHOR: struct
-while let Some(key) = map.next_key::<&str>()? {
-    match key {
+while let Some(key) = map.next_key::<String>()? {
+    match key.as_str() {
         "vm_name" => {
             map.next_value_seed(NameDeserializer { place: self.place })?;
         }
@@ -315,8 +315,8 @@ fn recipe_test() {
                         }
                     }
 
-                    while let Some(key) = map.next_key::<&str>()? {
-                        match key {
+                    while let Some(key) = map.next_key::<String>()? {
+                        match key.as_str() {
                             "vm_name" => {
                                 map.next_value_seed(NameDeserializer { place: self.place })?;
                             }

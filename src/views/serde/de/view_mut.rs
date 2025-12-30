@@ -3,6 +3,7 @@ use crate::component::Component;
 use crate::entity_id::EntityId;
 use crate::tracking::Tracking;
 use crate::views::ViewMut;
+use alloc::string::String;
 use alloc::vec::Vec;
 use core::fmt;
 use serde::de::{DeserializeOwned, DeserializeSeed, Visitor};
@@ -82,7 +83,10 @@ where
 
                     let mut data_value = None;
 
-                    while let Some(key) = map.next_key::<&str>()? {
+                    // serde doesn't like to deserialize field names using &str
+                    // when there are escape characters
+                    // Cow doesn't seem to work either
+                    while let Some(key) = map.next_key::<String>()? {
                         if key == "type_name" {
                             // Ignore the type name
                             map.next_value::<serde::de::IgnoredAny>()?;
