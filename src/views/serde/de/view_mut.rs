@@ -66,7 +66,7 @@ where
             impl<'tmp, 'view, 'de: 'view, T: Component, Track: Tracking> Visitor<'de>
                 for StructVisitor<'tmp, 'view, T, Track>
             where
-                T: for<'d> Deserialize<'d>,
+                T: DeserializeOwned,
             {
                 type Value = ();
 
@@ -122,7 +122,7 @@ where
             impl<'tmp, 'view, 'de: 'view, T: Component, Track: Tracking> Visitor<'de>
                 for SeqVisitor<'tmp, 'view, T, Track>
             where
-                T: for<'d> Deserialize<'d>,
+                T: DeserializeOwned,
             {
                 type Value = ();
 
