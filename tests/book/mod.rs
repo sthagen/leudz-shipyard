@@ -7,6 +7,8 @@ mod add_entity;
 mod custom_view;
 mod delete_components;
 mod delete_entity;
+#[cfg(feature = "serde1")]
+mod entity_less_serde;
 mod get;
 mod hierarchy;
 mod iterators;

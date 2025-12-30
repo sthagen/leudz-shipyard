@@ -33,5 +33,6 @@
     - [Sparse Set](./going-deeper/sparse-set.md)
 - [Recipes](./recipes.md)
     - [Hierarchy](./recipes/hierarchy.md)
+    - [Entity-less serialization](./recipes/entity-less-serde.md)
     - [Seed](./recipes/seed.md)
 - [Contributors](./contributors.md)
