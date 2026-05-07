@@ -43,3 +43,6 @@ rustfmt_errors:
 
 publish version args="":
     cargo release {{version}} {{args}}
+
+book args="":
+    mdbook build ./guide/master {{args}}
